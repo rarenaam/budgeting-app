@@ -6,7 +6,7 @@ import { Dashboard } from "@/components/budget/dashboard"
 import { type BudgetState, demoState } from "@/lib/budget"
 
 // PAS DIT AAN NAAR JOUW VERCEL URL (ZONDER slash aan het einde!)
-const BACKEND_URL = "budget-backend-juqfcu8r4-joppevanijkel-5313s-projects.vercel.app";
+const BACKEND_URL = "https://budget-backend-juqfcu8r4-joppevanijkel-5313s-projects.vercel.app";
 
 export default function Page() {
   const [state, setState] = useState<BudgetState | null>(null)
