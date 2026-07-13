@@ -19,24 +19,35 @@ export default function Page() {
         // Eerst even de salaris-update triggeren
         await fetch(`${BACKEND_URL}/api/budget/update`);
         
-        // Danach de actuele state ophalen
+        // Daarna de actuele state ophalen
         const res = await fetch(`${BACKEND_URL}/api/budget`);
         if (res.ok) {
           const data = await res.json();
           
-          // CRUCIALE FIX: Zorg dat arrays altijd bestaan zodat .reduce() in het dashboard niet crasht
+          // SUPER AGRESSIEVE FIX: Zorg dat arrays NOOIT undefined of null kunnen zijn, zelfs als 'data' leeg is.
           const safeData = {
-            transactions: [],
-            incomes: [],
-            fixedExpenses: [],
-            sinkingFunds: [],
-            ...data // Overschrijf de lege lijstjes als ze al wél in Firestore staan
+            balance: data?.balance ?? 0,
+            dailySalary: data?.dailySalary ?? 0,
+            lastUpdated: data?.lastUpdated ?? new Date().toISOString(),
+            transactions: Array.isArray(data?.transactions) ? data.transactions : [],
+            incomes: Array.isArray(data?.incomes) ? data.incomes : [],
+            fixedExpenses: Array.isArray(data?.fixedExpenses) ? data.fixedExpenses : [],
+            sinkingFunds: Array.isArray(data?.sinkingFunds) ? data.sinkingFunds : []
           };
           
-          setState(safeData);
+          // Als de database écht leeg is (geen balance en geen transacties), sturen we door naar SetupForm
+          if (!data || Object.keys(data).length === 0) {
+            setState(null);
+          } else {
+            setState(safeData);
+          }
+        } else {
+          // Als de backend een fout geeft (bijv. document bestaat niet), toon het SetupForm
+          setState(null);
         }
       } catch (err) {
         console.error("Fout bij ophalen budget:", err);
+        setState(null); // Toon setup form bij fouten zodat de gebruiker kan resetten
       } finally {
         setLoading(false);
       }
