@@ -19,11 +19,21 @@ export default function Page() {
         // Eerst even de salaris-update triggeren
         await fetch(`${BACKEND_URL}/api/budget/update`);
         
-        // Daarna de actuele state ophalen
+        // Danach de actuele state ophalen
         const res = await fetch(`${BACKEND_URL}/api/budget`);
         if (res.ok) {
           const data = await res.json();
-          setState(data);
+          
+          // CRUCIALE FIX: Zorg dat arrays altijd bestaan zodat .reduce() in het dashboard niet crasht
+          const safeData = {
+            transactions: [],
+            incomes: [],
+            fixedExpenses: [],
+            sinkingFunds: [],
+            ...data // Overschrijf de lege lijstjes als ze al wél in Firestore staan
+          };
+          
+          setState(safeData);
         }
       } catch (err) {
         console.error("Fout bij ophalen budget:", err);
