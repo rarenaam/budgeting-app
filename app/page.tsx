@@ -24,30 +24,27 @@ export default function Page() {
         if (res.ok) {
           const data = await res.json();
           
-          // SUPER AGRESSIEVE FIX: Zorg dat arrays NOOIT undefined of null kunnen zijn, zelfs als 'data' leeg is.
-          const safeData = {
-            balance: data?.balance ?? 0,
-            dailySalary: data?.dailySalary ?? 0,
-            lastUpdated: data?.lastUpdated ?? new Date().toISOString(),
-            transactions: Array.isArray(data?.transactions) ? data.transactions : [],
-            incomes: Array.isArray(data?.incomes) ? data.incomes : [],
-            fixedExpenses: Array.isArray(data?.fixedExpenses) ? data.fixedExpenses : [],
-            sinkingFunds: Array.isArray(data?.sinkingFunds) ? data.sinkingFunds : []
+          // EXACTE MATCH MET JOUW BUDGETSTATE TYPE:
+          const safeData: BudgetState = {
+            checking: Number(data?.checking) || 0,
+            savings: Number(data?.savings) || 0,
+            sinkingFunds: Array.isArray(data?.sinkingFunds) ? data.sinkingFunds : [],
+            income: Array.isArray(data?.income) ? data.income : (Array.isArray(data?.incomes) ? data.incomes : []),
+            expenses: Array.isArray(data?.expenses) ? data.expenses : (Array.isArray(data?.fixedExpenses) ? data.fixedExpenses : [])
           };
           
-          // Als de database écht leeg is (geen balance en geen transacties), sturen we door naar SetupForm
-          if (!data || Object.keys(data).length === 0) {
+          // Als de database écht leeg is, sturen we door naar SetupForm
+          if (!data || Object.keys(data).length === 0 || (safeData.income.length === 0 && safeData.expenses.length === 0)) {
             setState(null);
           } else {
             setState(safeData);
           }
         } else {
-          // Als de backend een fout geeft (bijv. document bestaat niet), toon het SetupForm
           setState(null);
         }
       } catch (err) {
         console.error("Fout bij ophalen budget:", err);
-        setState(null); // Toon setup form bij fouten zodat de gebruiker kan resetten
+        setState(null);
       } finally {
         setLoading(false);
       }
